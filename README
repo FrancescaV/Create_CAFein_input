@@ -1,0 +1,39 @@
+To create a WD input model good for CAFein. Use the previous version 
+of the code for non-degenerate stars.
+
+##########################################################################################
+- step 1: 
+
+copy convertModel_step1.c in convertModel.c
+make clean
+make
+
+This step creates a file called:
+
+r_delAd_Lr.dat
+
+This containings r, del_ad, and the luminosity, and their derivatives.
+I added points using Steffen interpolation if r[i] >= 0.74 && r[i] <= 0.85 and 
+r[i] >= 0.9996 && r[i] <= 0.99994, after looking at the model by eye.
+
+##########################################################################################
+- step 2
+
+Open SmothSpline.Rmd in R studio
+click knitr
+The code will generate a file called r_delAd_postRprocessing.dat, 
+containing r/R, delAd, and its derivative computed with smoothing spline interpolation.
+As the knits plots show, the derivative computed this way is much smoother than the 
+one computed with Steffen.
+
+##########################################################################################
+- step 3
+
+copy convertModel_step2.c in convertModel.c
+make clean
+make
+
+this step creates the WD model needed in input to CAFein.
+
+
+

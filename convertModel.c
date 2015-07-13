@@ -18,12 +18,6 @@
  *****	The units used are G = M = R = Rgas = 1
  *****
  *****
- *****	In this new version of the code, I use finite differences to compute derivatives,
- *****	instead of Steffen interpolation
- *****
- *****	http://www.m-hikari.com/ijma/ijma-password-2009/ijma-password17-20-2009/bhadauriaIJMA17-20-2009.pdf
- *****
- *****
  *****
  *****	To set:
  *****	fileNameIn = "log_0.2Msun_cool.data";
@@ -104,36 +98,38 @@ main (void)
     startSurfaceRadiativeRegion = 0.0, endSurfaceRadiativeRegion = 0.0,
     s_units = 0.0, g_units = 0.0, cm_units = 0.0, erg_units = 0.0, K_units = 0.0, U_surf = 0.0;
     
-    double *m, *cSound,*Gamma1, *entropy, *r, *rho, *logrho, *T, *logT, *P, *logP, *Lr, *del, *delad, *Cp, *kappa, *g, *N2, *Vg, *U, *V,
-    *c1, *c2, *Astar, *L2, *kappa_T, *kappa_rho, *eps_T, *eps_rho, *eps_nucl, *c3, *c4, *scale_heigh, *chiRho, *chiT,
+    double *m, *cSound,*Gamma1, *entropy, *r, *rho, *logrho, *T, *logT, *P, *logP, *Lr, *del, *delad, *dr_delad, 
+    *Cp, *kappa, *g, *N2, *Vg, *U, *V, *r_dr_delad,
+    *c1, *c2, *c2_fitted, *Astar, *L2, *kappa_T, *kappa_rho, *eps_T, *eps_rho, *eps_nucl, *c3, *c4, *scale_heigh, *chiRho, *chiT,
     **fit_m_Coeffs, **fit_rho_Coeffs, **fit_P_Coeffs, **fit_T_Coeffs, **fit_Vg_Coeffs,
     **fit_Astar_Coeffs, **fit_U_Coeffs, **fit_V_Coeffs, **fit_c1_Coeffs, **fit_N2_Coeffs, **fit_L2_Coeffs,
-    **fit_g_Coeffs, **fit_Lr_Coeffs, **fit_delad_Coeffs, **fit_del_Coeffs, **fit_Cp_Coeffs, **fit_kappa_Coeffs,
+    **fit_g_Coeffs, **fit_Lr_Coeffs, **fit_delad_Coeffs, **fit_dr_delad_Coeffs, **fit_del_Coeffs, **fit_Cp_Coeffs, **fit_kappa_Coeffs,
     **fit_kappaRho_Coeffs, **fit_kappaT_Coeffs, **fit_Gamma1_Coeffs, **fit_entropy_Coeffs, **fit_epsT_Coeffs, **fit_epsRho_Coeffs,
-    **fit_epsNucl_Coeffs, **fit_c2_Coeffs, **fit_c3_Coeffs , **fit_c4_Coeffs, **fit_scaleHeigh_Coeffs, **fit_chiRho_Coeffs, **fit_chiT_Coeffs,
+    **fit_epsNucl_Coeffs, **fit_c2_Coeffs, **fit_c2_fitted_Coeffs, **fit_c3_Coeffs , **fit_c4_Coeffs, **fit_scaleHeigh_Coeffs, **fit_chiRho_Coeffs, **fit_chiT_Coeffs,
     *mFuncs, *rhoFuncs, *PFuncs, *TFuncs, *VgFuncs, *AstarFuncs, *UFuncs, *VFuncs, *c1Funcs, *N2Funcs,
-    *L2Funcs, *gFuncs, *LrFuncs, *deladFuncs, *delFuncs, *CpFuncs, *kappaFuncs, *kappaRhoFuncs, *kappaTFuncs, *chiRhoFuncs, *chiTFuncs,
-    *Gamma1Funcs, *entropyFuncs, *epsTFuncs, *epsRhoFuncs, *epsNuclFuncs, *c2Funcs, *c3Funcs, *c4Funcs, *scale_heighFuncs;
+    *L2Funcs, *gFuncs, *LrFuncs, *deladFuncs, *dr_deladFuncs, *delFuncs, *CpFuncs, *kappaFuncs, *kappaRhoFuncs, *kappaTFuncs, *chiRhoFuncs, *chiTFuncs,
+    *Gamma1Funcs, *entropyFuncs, *epsTFuncs, *epsRhoFuncs, *epsNuclFuncs, *c2Funcs, *c2_fitted_Funcs, *c3Funcs, *c4Funcs, *scale_heighFuncs;
     
     typedef vector<double> Row;
-    vector<Row> table, table_2;
-    int rowsInput = 0, rowsInput_2 = 0, i = 0, maxMesh = 0, minMesh = 0, j = 0;
-    const char *fileNameIn, *fileNameIn_2, *fileNameOut;
-    
+    vector<Row> table, table_2, table_3;
+    int rowsInput = 0, rowsInput_2 = 0, rowsInput_3 = 0, i = 0, maxMesh = 0, minMesh = 0, j = 0;
+    const char *fileNameIn, *fileNameIn_2, *fileNameIn_3, *fileNameOut;
     /*****************************************************
      *****************************************************
      ** I/O
      *****************************************************
      ****************************************************/
-    ifstream input, input_2;
+    ifstream input, input_2, input_3;
     ofstream output;
     
-    fileNameIn = "/Users/francesca/Northwestern/Research/mesaRuns_firstVersionDownloaded/coolMyModel_WD/LOGS/0p23Msun_CAFein/log1673.data";
+    fileNameIn   = "/Users/francesca/Northwestern/Research/mesaRuns_firstVersionDownloaded/coolMyModel_WD/LOGS/0p23Msun_CAFein/log1673.data";
     fileNameIn_2 = "/Users/francesca/Northwestern/Research/mesaRuns_firstVersionDownloaded/coolMyModel_WD/LOGS/0p23Msun_CAFein/log1673.data.SAIO.txt";
-    fileNameOut = "output/WD/0p23Msun/log1673/MESAtoCAFein_log1673_0p23Msun_Z0p02_WD_deltaX5eM5in_07072015.dat";
+    fileNameIn_3 = "/Users/francesca/Northwestern/Research/create_models_input_CAFein/FromMESA_fixedUnitsIn_07082015/r_delAd_postRprocessing.dat";
+    fileNameOut  = "output/WD/0p23Msun/log1673/MESAtoCAFein_log1673_0p23Msun_Z0p02_WD_deltaX5eM5in_07132015.dat";
     
     input.open(fileNameIn);
     input_2.open(fileNameIn_2);
+    input_3.open(fileNameIn_3);
     output.open(fileNameOut);
     output << setiosflags(ios_base::scientific) << setprecision(16);
     /*****************************************************
@@ -187,7 +183,6 @@ main (void)
      ** and storing them in table
      *****************************************************
      *****************************************************/
-    
     rowsInput = readInputFile(fileNameIn, table);
     rowsInput = rowsInput - 3; //to cope with the labels!
     cout << "Number rows in input file = " << rowsInput << endl;
@@ -201,7 +196,15 @@ main (void)
     rowsInput_2 = readInputFile(fileNameIn_2, table_2);
     cout << "Number rows in SAIO file = " << rowsInput_2 << endl;
     input_2.close();
-    
+    /*****************************************************
+     *****************************************************
+     ** Exctracting properties from interpolated model via
+     ** R: first elm is 1, last element is rowsInput_3
+     *****************************************************
+     *****************************************************/
+    rowsInput_3 = readInputFile(fileNameIn_3, table_3);
+    cout << "number rows in R model = " << rowsInput_3 << endl;
+    input_3.close();
     /*****************************************************
      *****************************************************
      ** allocating vectors
@@ -237,6 +240,7 @@ main (void)
     eps_rho   = dfun(rowsInput);
     eps_nucl  = dfun(rowsInput);
     c2        = dfun(rowsInput);
+    c2_fitted = dfun(rowsInput);
     c3        = dfun(rowsInput);
     c4        = dfun(rowsInput);
     scale_heigh   = dfun(rowsInput);
@@ -269,6 +273,7 @@ main (void)
     epsRhoFuncs    = dfun(rowsInput);
     epsNuclFuncs   = dfun(rowsInput);
     c2Funcs        = dfun(rowsInput);
+    c2_fitted_Funcs= dfun(rowsInput);
     c3Funcs        = dfun(rowsInput);
     c4Funcs        = dfun(rowsInput);
     scale_heighFuncs= dfun(rowsInput);
@@ -300,12 +305,17 @@ main (void)
     fit_epsRho_Coeffs    = dfunc(4, rowsInput);
     fit_epsNucl_Coeffs   = dfunc(4, rowsInput);
     fit_c2_Coeffs        = dfunc(4, rowsInput);
+    fit_c2_fitted_Coeffs = dfunc(4, rowsInput);
     fit_c3_Coeffs        = dfunc(4, rowsInput);
     fit_c4_Coeffs        = dfunc(4, rowsInput);
     fit_scaleHeigh_Coeffs= dfunc(4, rowsInput);
     fit_chiRho_Coeffs     = dfunc(4, rowsInput);
     fit_chiT_Coeffs       = dfunc(4, rowsInput);
     
+    dr_delad  	          = dfun(rowsInput_3);
+	r_dr_delad	          = dfun(rowsInput_3);
+	dr_deladFuncs         = dfun(rowsInput_3);
+    fit_dr_delad_Coeffs   = dfunc(4, rowsInput_3);
     /*****************************************************
      *****************************************************
      *****	Reading all the input quantities in cgs units
@@ -321,11 +331,20 @@ main (void)
      *****
      *****************************************************
      *****************************************************/
+    for(i = 1; i<=rowsInput_3; i++)
+    {
+    	r_dr_delad[i-1]  = table_3[i][1];//no dimensions
+    	dr_delad[i-1]    = table_3[i][3];//no dimensions
+    }
+    //for stuid numerical noise in the last digit...
+    r_dr_delad[0] = r_dr_delad[0]-1.0e-15;
+    
+    table_3.clear();
+
     for(i = 1; i<=rowsInput_2; i++)
     {
         kappa_rho[i-1] = table_2[i][12];//no dimensions
         kappa_T[i-1]   = table_2[i][13];//no dimensions
-        
         chiRho[i-1]    = table_2[i][7];//no dimensions
         chiT[i-1]      = table_2[i][8];//no dimensions
         eps_T[i-1]     = table_2[i][21];//no dimensions
@@ -521,20 +540,25 @@ main (void)
     calculateSteffenInterpolant(rowsInput, r, scale_heigh, fit_scaleHeigh_Coeffs);
     calculateSteffenInterpolant(rowsInput, r, chiRho, fit_chiRho_Coeffs);
     calculateSteffenInterpolant(rowsInput, r, chiT, fit_chiT_Coeffs);
+    calculateSteffenInterpolant(rowsInput_3, r_dr_delad, dr_delad, fit_dr_delad_Coeffs);
     /***************************************************
      **** Compute the missing quantity c2 and calculate its
      **** Steffen interpolants...
      **************************************************/
-    
     for (i=0; i<rowsInput; i++)
     {
         kappa_ad = kappa_T[i]*delad[i] + kappa_rho[i]/Gamma1[i];
         
         evaluateSteffenInterpolant(rowsInput,r,fit_delad_Coeffs,r[i], deladFuncs);
         c2[i] = (kappa_ad - 4.0*delad[i])*V[i]*del[i]+delad[i]*((r[i]/delad[i])*deladFuncs[1]+V[i]);
+        
+		cout <<r[i] << endl;
+        evaluateSteffenInterpolant(rowsInput_3,r_dr_delad,fit_dr_delad_Coeffs,r[i], dr_deladFuncs);
+        c2_fitted[i] = (kappa_ad - 4.0*delad[i])*V[i]*del[i]+delad[i]*((r[i]/delad[i])*dr_deladFuncs[0]+V[i]);
+	
     }
-    
     calculateSteffenInterpolant(rowsInput, r, c2, fit_c2_Coeffs);
+    calculateSteffenInterpolant(rowsInput, r, c2_fitted, fit_c2_fitted_Coeffs);
     
     output << "........M(Msun)..................R(Rsun)..................L(Lsun).................";
     output << "Pc(erg/cm3).................Tc(K).................rhoC(g/cm3).............";
@@ -550,10 +574,10 @@ main (void)
     output << "U........................c1....................N2....................L2/(l(l+1))....................";
     output << "g.......................Lr.........................V................del_ad(noDim)...............";
     output << "del(noDim)...............Cp...........................v_t.................kappa_s(noDim)..............";
-    output << "eps_ad(noDim).........eps_s(noDim)...................c2........................c3.....................";
+    output << "eps_ad(noDim).........eps_s(noDim)...................c2_fitted.................c3.....................";
     output << "c4.....................dlnLr/dlnr...............P_scale..............StartRadSurfLayer..........";
     output << "EndRadSurfLayer.............Gamma1....................entropy.................kappa...................chiRho...................";
-    output << "chiT...................U/Usurf..............ddel_ad_dr...............kappa_ad"<< endl;
+    output << "chiT...................U/Usurf..............c2"<< endl;
     
     /* dimensionless v_t*/
     v_t = Cp[0]*delad[0]*rho[0]*T[0]/P[0];
@@ -572,47 +596,10 @@ main (void)
     output << "   " << m[0] << "   " << log10(rho[0]) << "   " << log10(P[0]) << "   " <<  log10(T[0]) << "   " << r[0] << "   "
     << Vg[0] << "   " << Astar[0] <<  "   " << U[0] << "   " << c1[0] << "   " << N2[0] << "   "
     << L2[0] << "   " << g[0] << "   " << Lr[0] << "   " << V[0] << "   " << delad[0]<< "   " << del[0] << "   " << Cp[0] << "   "
-    << v_t << "   " << kappa_s <<"   " << eps_ad <<"   " << eps_s <<  "   " << c2[0] <<"   " << c3[0] << "   " << c4[0] << "   "
+    << v_t << "   " << kappa_s <<"   " << eps_ad <<"   " << eps_s <<  "   " << c2_fitted[0] <<"   " << c3[0] << "   " << c4[0] << "   "
     << dlnLr_dlnr<< "   " << scale_heigh[0] << "   " << startSurfaceRadiativeRegion  << "   " << endSurfaceRadiativeRegion << "   "
     << Gamma1[0] << "   " << entropy[0] << "   " << kappa[0] << "   " << chiRho[0] << "   " << chiT[0] <<  "   " << U[0]/U_surf <<  "   "
-    << deladFuncs[1] <<  "   " << kappa_ad << endl;
-    
-    //Adding data points to see if the fitting with R can help
-    const char *out_tempo_address;
-    out_tempo_address = "r_delAd_Lr.dat";
-    ofstream out_tempo;
-    out_tempo.open(out_tempo_address);
-    out_tempo << setiosflags(ios_base::scientific) << setprecision(16);
-    double constA = 0.0, constB = 0.0;
-    
-    for (i = 0; i<rowsInput; i++)
-    {
-        //problematic intervals: 0.74 - 0.85, 0.9996 - 0.99994
-        if ((r[i] >= 0.74 && r[i] <= 0.85) || (r[i] >= 0.9996 && r[i] <= 0.99994))
-        {
-            maxMesh = 3;
-            minMesh = 1;
-            for (j = minMesh; j <= maxMesh; j++)
-            {
-                dbl_j = static_cast<double>(j);
-                rStep = (dbl_j*r[i] + (maxMesh - dbl_j)*r[i-1])/maxMesh;
-                
-                evaluateSteffenInterpolant(rowsInput,r,fit_delad_Coeffs,rStep, deladFuncs);
-                evaluateSteffenInterpolant(rowsInput,r,fit_Lr_Coeffs,rStep, LrFuncs);
-                
-                out_tempo << rStep << "   " << deladFuncs[0] << "   " << deladFuncs[1] << "   " << LrFuncs[0] << "  " << LrFuncs[1] << endl;
-            }//for (j = minMesh; j <= maxMesh; j++)
-        }//if ((r[i] - r[i-1])>1.0e-4)
-        else
-        {
-            evaluateSteffenInterpolant(rowsInput,r,fit_delad_Coeffs,r[i], deladFuncs);
-            evaluateSteffenInterpolant(rowsInput,r,fit_Lr_Coeffs,r[i], LrFuncs);
-            
-            out_tempo << r[i] << "   " << delad[i] << "   " << deladFuncs[1] << "   " << Lr[i] << "   " << LrFuncs[i] << endl;
-        }
-    }//for (i = 1; i<rowsInput; i++)
-    out_tempo.close();
-    
+    << c2[0] << endl;
     
     for (i = 1; i<rowsInput; i++)
     {
@@ -674,6 +661,8 @@ main (void)
                 evaluateSteffenInterpolant(rowsInput,r,fit_scaleHeigh_Coeffs,rStep, scale_heighFuncs);
                 evaluateSteffenInterpolant(rowsInput,r,fit_chiRho_Coeffs,rStep, chiRhoFuncs);
                 evaluateSteffenInterpolant(rowsInput,r,fit_chiT_Coeffs,rStep, chiTFuncs);
+
+                evaluateSteffenInterpolant(rowsInput,r,fit_c2_fitted_Coeffs,rStep, c2_fitted_Funcs);
                 
                 v_t = CpFuncs[0]*deladFuncs[0]*rhoFuncs[0]*TFuncs[0]/PFuncs[0];
                 
@@ -693,34 +682,31 @@ main (void)
                 << c1Funcs[0] << "   " << N2Funcs[0] << "   " << L2Funcs[0] << "   "
                 << gFuncs[0] << "   " << LrFuncs[0] << "   " << VFuncs[0] << "   "
                 << deladFuncs[0] << "   " << delFuncs[0] << "   " << CpFuncs[0] <<  "   " << v_t <<  "   "
-                << kappa_s<<  "   " << eps_ad <<"   " << eps_s <<  "   " << c2Funcs[0] << "   " << c3Funcs[0] << "   "
+                << kappa_s<<  "   " << eps_ad <<"   " << eps_s <<  "   " << c2_fitted_Funcs[0] << "   " << c3Funcs[0] << "   "
                 << c4Funcs[0] << "   " << dlnLr_dlnr << "   " << scale_heighFuncs[0]  << "   " << startSurfaceRadiativeRegion  << "   "
                 << endSurfaceRadiativeRegion << "   " << Gamma1Funcs[0] << "   " << entropyFuncs[0] << "   " << kappaFuncs[0] << "   "
-                << chiRhoFuncs[0] << "   " << chiTFuncs[0] <<  "   " << UFuncs[0]/U_surf <<  "   " << deladFuncs[1] <<  "   " << kappa_ad << endl;
+                << chiRhoFuncs[0] << "   " << chiTFuncs[0] <<  "   " << UFuncs[0]/U_surf <<  "   " << c2Funcs[0] << endl;
                 
             }//for (j = minMesh; j <= maxMesh; j++)
         }//if ((r[i] - r[i-1])>1.0e-4)
         else
-        {
-            
-            evaluateSteffenInterpolant(rowsInput,r,fit_delad_Coeffs,r[i], deladFuncs);
-            
+        {            
             output << "   " << m[i] << "   " << logrho[i] << "   " << logP[i] << "   " <<  logT[i] << "   " << r[i] << "   "
             << Vg[i] << "   " << Astar[i] <<  "   " << U[i] << "   " << c1[i] << "   " << N2[i] << "   "
             << L2[i] << "   " << g[i] << "   " << Lr[i] << "   " << V[i] << "   " << delad[i] << "   " << del[i]<< "   "
-            << Cp[i] << "   " << v_t<< "   " << kappa_s<<"   " << eps_ad <<"   " << eps_s <<  "   " << c2[i] << "   "
+            << Cp[i] << "   " << v_t<< "   " << kappa_s<<"   " << eps_ad <<"   " << eps_s <<  "   " << c2_fitted[i] << "   "
             << c3[i] << "   " << c4[i]  <<"   " << dlnLr_dlnr << "   " << scale_heigh[i]  << "   " << startSurfaceRadiativeRegion  << "   "
             << endSurfaceRadiativeRegion << "   " << Gamma1[i] << "   " << entropy[i] << "   " << kappa[i] << "   " << chiRho[i] << "   "
-            << chiT[i] << "   " << U[i]/U_surf <<  "   " << deladFuncs[1] <<  "   " << kappa_ad << endl;
+            << chiT[i] << "   " << U[i]/U_surf <<  "   " << c2[i] << endl;
         }
     }//for (i = 1; i<rowsInput; i++)
     output.close();
     
     
+    
     free(m);
     free(cSound);
     free(Gamma1);
-    
     free(r);
     free(rho);
     free(T);
@@ -747,6 +733,7 @@ main (void)
     free(eps_rho);
     free(eps_nucl);
     free(c2);
+    free(c2_fitted);
     free(c3);
     free(c4);
     free(scale_heigh);
@@ -777,12 +764,16 @@ main (void)
     free(epsRhoFuncs);
     free(epsNuclFuncs);
     free(c2Funcs);
+    free(c2_fitted_Funcs);
     free(c3Funcs);
     free(c4Funcs);
     free(scale_heighFuncs);
     free(chiRhoFuncs);
     free(chiTFuncs);
     
+    free(dr_delad);
+    free(r_dr_delad);
+	free(dr_deladFuncs);
     for (i=0; i<4; i++)
     {
         free(fit_m_Coeffs[i]);
@@ -809,11 +800,13 @@ main (void)
         free(fit_epsRho_Coeffs[i]);
         free(fit_epsNucl_Coeffs[i]);
         free(fit_c2_Coeffs[i]);
+        free(fit_c2_fitted_Coeffs[i]);
         free(fit_c3_Coeffs[i]);
         free(fit_c4_Coeffs[i]);
         free(fit_scaleHeigh_Coeffs[i]);
         free(fit_chiRho_Coeffs[i]);
         free(fit_chiT_Coeffs[i]);
+        free(fit_dr_delad_Coeffs[i]);
     }
     free(fit_scaleHeigh_Coeffs);	
     free(fit_m_Coeffs);
@@ -840,10 +833,12 @@ main (void)
     free(fit_epsRho_Coeffs);
     free(fit_epsNucl_Coeffs);
     free(fit_c2_Coeffs);
+    free(fit_c2_fitted_Coeffs);
     free(fit_c3_Coeffs);
     free(fit_c4_Coeffs);
     free(fit_chiRho_Coeffs);
     free(fit_chiT_Coeffs);
+    free(fit_dr_delad_Coeffs[i]);
     
     
     cout << "Done, cazzo" << endl;
