@@ -1,0 +1,102 @@
+---
+title: "07/09/2015 Checking CAFein's input model non-degenerate:"
+output: html_document
+---
+
+Here I check the c2 parameter needed by CAFein. 
+I computed it in two ways: 1) via Steffen, 2) using spline in R.
+```{r message=FALSE, warning = FALSE}
+
+library(ggplot2)
+library(grid)
+library(gridExtra)
+source("multiplot.R")
+
+setwd("/Users/francesca/Northwestern/Research/create_models_input_CAFein/FromMESA_fixedUnitsIn_04022013")
+filename = "output/ZAMS/zams_1p525Msun_Z0p028_WASP-71/MESAtoCAFein_log211_1p525Msun_Z0p028_deltaX5eM5in_12262013.dat"
+all_content <- readLines(filename)
+toSkip <- c(1, 2, 3, 4)
+skipBeginning <- all_content[-toSkip]
+
+dat <- read.table(textConnection(skipBeginning))
+```
+
+Plotting various parameters
+```{r message=FALSE, warning = FALSE}
+
+names(dat) <- c("m","logrho","logP","logT","r","Vg","Astar","U","c1","N2","L2overllp1","g","Lr","V","del_ad","del","Cp","v_t","kappa_s","eps_ad","eps_s","c2","c3","c4","dlnLr_dlnr","P_scale","StartRadSurfLayer","EndRadSurfLayer","Gamma1","entropy","kappa","chiRho","chiT","UoverUsurf")
+
+VgM3 <- dat$Vg-3
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = Vg), color = "red")+geom_line(aes(y = VgM3))+ ggtitle("Vg vs r")+ theme_bw()+scale_y_log10()
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = Vg), color = "red")+geom_line(aes(y = VgM3))+ ggtitle("Vg vs r surface close-up")+ theme_bw()+scale_y_log10()+xlim(0.999,1)+ylim(10, 1e4)
+multiplot(p1, p2, cols=2)
+
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = v_t))+ ggtitle("Vt = Cp*delAd*rho*T/P vs r")+theme_bw()+xlim(0.,1)
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = v_t))+ theme_bw()+xlim(0.98,0.999)
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = v_t))+ theme_bw()+xlim(0.999,0.9995)
+p4 <- ggplot(dat, aes(r))+geom_line(aes(y = v_t))+ theme_bw()+xlim(0.9995,1)+ylim(1, 2.6)
+
+multiplot(p1, p2, p3, p4, cols=2)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = Cp))+ theme_bw()+scale_y_log10()
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = Cp))+ theme_bw()+scale_y_log10()+xlim(0.98,0.998)#+ylim(10, 1e4)
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = Cp))+ theme_bw()+scale_y_log10()+xlim(0.998,0.999)#+ylim(10, 1e4)
+p4 <- ggplot(dat, aes(r))+geom_line(aes(y = Cp))+ theme_bw()+scale_y_log10()+xlim(0.999,1)#+ylim(10, 1e4)
+
+multiplot(p1, p2, p3, p4, cols=2)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = logrho))+ theme_bw()
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = logT))+ theme_bw()
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = logP))+ theme_bw()
+multiplot(p1, p2, p3, cols=1)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = del_ad))+ theme_bw()
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = del_ad))+ theme_bw()+xlim(0.98,0.998)#+ylim(10, 1e4)
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = del_ad))+ theme_bw()+xlim(0.998,0.999)#+ylim(10, 1e4)
+p4 <- ggplot(dat, aes(r))+geom_line(aes(y = del_ad))+ theme_bw()+xlim(0.999,1)#+ylim(10, 1e4)
+
+multiplot(p1, p2, p3, p4, cols=2)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = Astar))+ theme_bw()+ylim(-50, 50)
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = Astar))+ theme_bw()+xlim(0.98,0.998)+ylim(-150, 120)
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = Astar))+ theme_bw()+xlim(0.998,0.999)+ylim(-150, 120)
+p4 <- ggplot(dat, aes(r))+geom_line(aes(y = Astar))+ theme_bw()+xlim(0.999,1)#+ylim(10, 1e4)
+
+multiplot(p1, p2, p3, p4, cols=2)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = N2))+ theme_bw()+ylim(-50, 50)
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = N2))+ theme_bw()+xlim(0.98,0.998)+ylim(-150, 120)
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = N2))+ theme_bw()+xlim(0.998,0.999)+ylim(-150, 120)
+p4 <- ggplot(dat, aes(r))+geom_line(aes(y = N2))+ theme_bw()+xlim(0.999,1)#+ylim(10, 1e4)
+
+multiplot(p1, p2, p3, p4, cols=2)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = g))+ theme_bw()#+ylim(-50, 50)
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = U))+ theme_bw()#+ylim(-50, 50) 
+multiplot(p1, p2, cols=1)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = Lr))+ theme_bw()#+ylim(-50, 50) 
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = c1))+ theme_bw()#+ylim(-50, 50) 
+multiplot(p1, p2, cols=1)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = del))+ theme_bw()+ylim(-50, 50)
+p2 <- ggplot(dat, aes(r))+geom_line(aes(y = del))+ theme_bw()+xlim(0.98,0.998)
+p3 <- ggplot(dat, aes(r))+geom_line(aes(y = del))+ theme_bw()+xlim(0.998,0.999)
+p4 <- ggplot(dat, aes(r))+geom_line(aes(y = del))+ theme_bw()+xlim(0.999,1)#+ylim(10, 1e4)
+multiplot(p1, p2, p3, p4, cols=2)
+
+p1 <- ggplot(dat, aes(r))+geom_line(aes(y = c2)) + theme_bw()
+p1
+
+```
+## Conclusions:
+
+- some functions have spikes very close tot he surface, but interestingly they don't blow up (e.g., v_t reaches 2.5...)
+- clearly fitting the del_ad improved c2 significantly.
+- I think now we can do the following tests
+1. restart CAFein as is but with the new input model
+2. restart CAFein but chopping the surface
+3. restart CAFein using a WD model computed with MESA latest release.
+- is the spike in v_t physical?

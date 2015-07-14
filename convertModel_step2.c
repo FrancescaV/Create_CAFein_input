@@ -89,8 +89,8 @@ main (void)
     Lsun_cgs = 3.827e33,
     Rsun_cgs  = 6.95660e10,
     Msun_cgs = 1.98855e+33,
-    radiusPrecisionInterior = 5.0e-5,
-    radiusPrecisionSurface = 5.0e-5;
+    radiusPrecisionInterior = 5.0e-4,
+    radiusPrecisionSurface = 5.0e-4;
     
     double Pc = 0.0, Tc = 0.0, rhoc = 0.0, Teff = 0.0, Ltot_cgs = 0.0, Mtot_cgs = 0.0, Rtot_cgs = 0.0,
     rStep = 0.0, dbl_j = 0.0, dummy = 0.0, v_t = 0.0, kappa_ad = 0.0, kappa_s = 0.0,
